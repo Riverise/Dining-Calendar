@@ -30,9 +30,11 @@ DiningEvent:
 - title: String
 - date: DateTime
 - location: String
-- participants: List of Strings
+- participants: List of Strings (stored as JSON)
 - cost_total: Float
 - rating: Integer (1-5)
-- tags: List of Strings
+- tags: List of Strings (stored as JSON)
 - notes: String
 - image_path: Optional String (path to uploaded image)
+
+DiningEventUpdate: All fields optional for partial updates.

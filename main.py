@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import create_engine, Session, SQLModel
-from models import DiningEvent
+from models import DiningEvent, DiningEventUpdate
 import shutil
 import os
 
@@ -11,6 +12,15 @@ engine = create_engine("sqlite:///database.db", echo=True)
 SQLModel.metadata.create_all(engine)
 
 app = FastAPI(title="Dining Calendar Backend")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -36,11 +46,12 @@ def get_event(event_id: int):
         return event
 
 @app.put("/events/{event_id}", response_model=DiningEvent)
-def update_event(event_id: int, updated_event: DiningEvent):
+def update_event(event_id: int, updated_event: DiningEventUpdate):
     with Session(engine) as session:
         event = session.get(DiningEvent, event_id)
         if event:
-            for key, value in updated_event.dict().items():
+            update_data = updated_event.dict(exclude_unset=True)
+            for key, value in update_data.items():
                 setattr(event, key, value)
             session.commit()
             session.refresh(event)
