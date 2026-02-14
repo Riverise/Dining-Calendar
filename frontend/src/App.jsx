@@ -16,6 +16,7 @@ function App() {
     cost_total: '',
     rating: '',
     tags: '',
+    notes: '',
     date: '',
     file: null
   })
@@ -37,6 +38,7 @@ function App() {
           cost_total: event.cost_total,
           rating: event.rating,
           tags: event.tags,
+          notes: event.notes,
           image_path: event.image_path
         }
       }))
@@ -82,6 +84,7 @@ function App() {
       cost_total: parseFloat(formData.cost_total),
       rating: parseInt(formData.rating),
       tags: formData.tags.split(',').map(t => t.trim()),
+      notes: formData.notes,
       date: formData.date,
       image_path: imagePath
     }
@@ -95,6 +98,7 @@ function App() {
         cost_total: '',
         rating: '',
         tags: '',
+        notes: '',
         date: '',
         file: null
       })
@@ -199,6 +203,15 @@ function App() {
                 />
               </div>
               <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">备注</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full p-2 border rounded"
+                  rows="3"
+                />
+              </div>
+              <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">上传图片</label>
                 <input
                   type="file"
@@ -239,6 +252,7 @@ function App() {
             <p><strong>金额:</strong> {selectedEvent.extendedProps.cost_total}</p>
             <p><strong>评分:</strong> {selectedEvent.extendedProps.rating}</p>
             <p><strong>标签:</strong> {selectedEvent.extendedProps.tags.join(', ')}</p>
+            <p><strong>备注:</strong> {selectedEvent.extendedProps.notes}</p>
             {selectedEvent.extendedProps.image_path && (
               <div className="mt-4">
                 <strong>图片:</strong>
