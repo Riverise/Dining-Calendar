@@ -25,7 +25,7 @@ function App() {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/events')
+      const response = await axios.get('http://101.43.33.48:37767/events')
       const mappedEvents = response.data.map(event => ({
         id: event.id,
         title: event.title,
@@ -58,7 +58,7 @@ function App() {
       rating: parseInt(formData.rating)
     }
     try {
-      await axios.post('http://localhost:8000/events', data)
+      await axios.post('http://101.43.33.48:37767/events', data)
       setShowCreateModal(false)
       setFormData({
         title: '',
@@ -77,7 +77,7 @@ function App() {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8000/events/${selectedEvent.id}`)
+      await axios.delete(`http://101.43.33.48:37767/events/${selectedEvent.id}`)
       setShowDetailModal(false)
       setSelectedEvent(null)
       fetchEvents()
