@@ -29,7 +29,9 @@ DiningEvent:
 - id: Integer (primary key)
 - title: String
 - date: DateTime
+- end_datetime: Optional DateTime
 - location: String
+- category: Optional String
 - participants: List of Strings (stored as JSON)
 - cost_total: Float
 - rating: Integer (1-5)
@@ -38,3 +40,6 @@ DiningEvent:
 - image_path: Optional String (path to uploaded image)
 
 DiningEventUpdate: All fields optional for partial updates.
+
+### Existing databases
+If you have an older `database.db` created before `category` or `end_datetime` were added, the app will attempt to add the missing columns on startup. If you prefer a clean slate, delete `database.db` and restart the server to recreate it.

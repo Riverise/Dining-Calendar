@@ -28,6 +28,7 @@ function App() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [formData, setFormData] = useState(initialForm)
+  const [toast, setToast] = useState({ show: false, message: '' })
 
   useEffect(() => {
     fetchEvents()
@@ -40,19 +41,23 @@ function App() {
         id: event.id,
         title: event.title,
         start: event.date,
+        end: event.end_datetime || null,
         extendedProps: {
           location: event.location,
-          participants: event.participants,
+          category: event.category,
+          participants: event.participants || [],
           cost_total: event.cost_total,
           rating: event.rating,
-          tags: event.tags,
+          tags: event.tags || [],
           notes: event.notes,
-          image_path: event.image_path
+          image_path: event.image_path,
+          end_datetime: event.end_datetime
         }
       }))
       setEvents(mappedEvents)
     } catch (error) {
       console.error('Error fetching events:', error)
+      setToast({ show: true, message: error?.response?.data?.detail || '获取事件失败' })
     }
   }
 
@@ -89,28 +94,22 @@ function App() {
       }
     }
 
-    const startDateTime = `${formData.date}T${formData.startTime || '00:00'}`
+    const startDateTime = formData.date ? `${formData.date}T${formData.startTime || '00:00'}` : ''
     const endDateTime = formData.endDate
       ? `${formData.endDate}T${formData.endTime || '00:00'}`
       : null
 
-    const composedNotes = [
-      formData.notes,
-      formData.category ? `类型：${formData.category}` : '',
-      endDateTime ? `结束：${endDateTime}` : ''
-    ]
-      .filter(Boolean)
-      .join(' | ')
-
     const data = {
       title: formData.title,
       location: formData.location,
+      category: formData.category,
       participants: formData.participants.split(',').map(p => p.trim()).filter(Boolean),
       cost_total: parseFloat(formData.cost_total) || 0,
       rating: parseInt(formData.rating) || 0,
       tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
-      notes: composedNotes,
+      notes: formData.notes,
       date: startDateTime,
+      end_datetime: endDateTime,
       image_path: imagePath
     }
 
@@ -121,6 +120,7 @@ function App() {
       fetchEvents()
     } catch (error) {
       console.error('Error creating event:', error)
+      setToast({ show: true, message: error?.response?.data?.detail || '创建事件失败' })
     }
   }
 
@@ -133,6 +133,7 @@ function App() {
       fetchEvents()
     } catch (error) {
       console.error('Error deleting event:', error)
+      setToast({ show: true, message: error?.response?.data?.detail || '删除事件失败' })
     }
   }
 
@@ -360,22 +361,27 @@ function App() {
             <div className="space-y-1 text-sm text-slate-700">
               <p><strong>标题:</strong> {selectedEvent.title}</p>
               <p><strong>地点:</strong> {selectedEvent.extendedProps.location}</p>
-              <p><strong>参与人:</strong> {selectedEvent.extendedProps.participants.join(', ')}</p>
+              <p><strong>类别:</strong> {selectedEvent.extendedProps.category || '-'}</p>
+              <p><strong>参与人:</strong> {(selectedEvent.extendedProps.participants || []).join(', ')}</p>
               <p><strong>金额:</strong> {selectedEvent.extendedProps.cost_total}</p>
               <p><strong>评分:</strong> {selectedEvent.extendedProps.rating}</p>
-              <p><strong>标签:</strong> {selectedEvent.extendedProps.tags.join(', ')}</p>
+              <p><strong>标签:</strong> {(selectedEvent.extendedProps.tags || []).join(', ')}</p>
+              <p><strong>开始:</strong> {selectedEvent.start}</p>
+              <p><strong>结束:</strong> {selectedEvent.extendedProps.end_datetime || '-'}</p>
               <p><strong>备注:</strong> {selectedEvent.extendedProps.notes}</p>
             </div>
-            {selectedEvent.extendedProps.image_path && (
-              <div className="mt-3">
-                <strong>图片:</strong>
-                <img
-                  src={`${API_BASE}/${selectedEvent.extendedProps.image_path}`}
-                  alt="Event"
-                  className="w-full rounded-lg mt-2 object-cover max-h-60"
-                />
-              </div>
-            )}
+            <div className="mt-3">
+              <strong>图片:</strong>
+              <img
+                src={
+                  selectedEvent.extendedProps.image_path
+                    ? `${API_BASE}/${selectedEvent.extendedProps.image_path}`
+                    : "data:image/svg+xml;utf8,\n%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='450' viewBox='0 0 800 450'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter, Arial, sans-serif' font-size='28' fill='%23737b84'%3E聚餐占位图%3C/text%3E%3C/svg%3E"
+                }
+                alt="Event"
+                className="w-full rounded-lg mt-2 object-cover max-h-60"
+              />
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={handleDelete}
@@ -387,7 +393,26 @@ function App() {
           </div>
         </div>
       )}
+      {/* Toast rendered here so it is above the rest of the UI */}
+      <Toast toast={toast} setToast={setToast} />
     </main>
+  )
+}
+
+// Toast component render outside main markup so it appears on top-right
+function Toast({ toast, setToast }) {
+  useEffect(() => {
+    if (toast.show) {
+      const t = setTimeout(() => setToast({ show: false, message: '' }), 4000)
+      return () => clearTimeout(t)
+    }
+  }, [toast, setToast])
+
+  if (!toast.show) return null
+  return (
+    <div className="fixed right-4 top-4 z-50">
+      <div className="bg-black/80 text-white px-4 py-2 rounded shadow">{toast.message}</div>
+    </div>
   )
 }
 
