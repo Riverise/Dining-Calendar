@@ -16,7 +16,8 @@ function App() {
     cost_total: '',
     rating: '',
     tags: '',
-    date: ''
+    date: '',
+    file: null
   })
 
   useEffect(() => {
@@ -29,7 +30,15 @@ function App() {
       const mappedEvents = response.data.map(event => ({
         id: event.id,
         title: event.title,
-        start: event.date
+        start: event.date,
+        extendedProps: {
+          location: event.location,
+          participants: event.participants,
+          cost_total: event.cost_total,
+          rating: event.rating,
+          tags: event.tags,
+          image_path: event.image_path
+        }
       }))
       setEvents(mappedEvents)
     } catch (error) {
@@ -50,12 +59,31 @@ function App() {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault()
+    let imagePath = null
+    if (formData.file) {
+      const uploadData = new FormData()
+      uploadData.append('file', formData.file)
+      try {
+        const uploadResponse = await axios.post('http://101.43.33.48:37767/upload-image', uploadData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
+        imagePath = uploadResponse.data.path
+      } catch (error) {
+        console.error('Error uploading image:', error)
+        return
+      }
+    }
     const data = {
-      ...formData,
+      title: formData.title,
+      location: formData.location,
       participants: formData.participants.split(',').map(p => p.trim()),
-      tags: formData.tags.split(',').map(t => t.trim()),
       cost_total: parseFloat(formData.cost_total),
-      rating: parseInt(formData.rating)
+      rating: parseInt(formData.rating),
+      tags: formData.tags.split(',').map(t => t.trim()),
+      date: formData.date,
+      image_path: imagePath
     }
     try {
       await axios.post('http://101.43.33.48:37767/events', data)
@@ -67,7 +95,8 @@ function App() {
         cost_total: '',
         rating: '',
         tags: '',
-        date: ''
+        date: '',
+        file: null
       })
       fetchEvents()
     } catch (error) {
@@ -169,6 +198,15 @@ function App() {
                   required
                 />
               </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">上传图片</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
               <div className="flex justify-end">
                 <button
                   type="button"
@@ -192,10 +230,25 @@ function App() {
       {/* Event Detail Modal */}
       {showDetailModal && selectedEvent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-96">
+          <div className="bg-white p-6 rounded-lg w-96 max-h-96 overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">事件详情</h2>
             <p><strong>标题:</strong> {selectedEvent.title}</p>
             <p><strong>日期:</strong> {selectedEvent.start}</p>
+            <p><strong>地点:</strong> {selectedEvent.extendedProps.location}</p>
+            <p><strong>参与人:</strong> {selectedEvent.extendedProps.participants.join(', ')}</p>
+            <p><strong>金额:</strong> {selectedEvent.extendedProps.cost_total}</p>
+            <p><strong>评分:</strong> {selectedEvent.extendedProps.rating}</p>
+            <p><strong>标签:</strong> {selectedEvent.extendedProps.tags.join(', ')}</p>
+            {selectedEvent.extendedProps.image_path && (
+              <div className="mt-4">
+                <strong>图片:</strong>
+                <img
+                  src={`http://101.43.33.48:37767/${selectedEvent.extendedProps.image_path}`}
+                  alt="Event"
+                  className="w-full mt-2 rounded"
+                />
+              </div>
+            )}
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => setShowDetailModal(false)}
